@@ -1,0 +1,55 @@
+// Prisma Schema for Library Management System (ระบบจัดการห้องสมุด - โครงงานขั้นที่ 1)
+// MiddleWare interface connecting Next.js to MySQL (library_db)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. ตารางหนังสือ (books)
+model Book {
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(255)
+  author    String   @db.VarChar(255)
+  isbn      String   @unique @db.VarChar(50)
+  category  String   @db.VarChar(100)
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  borrowRecords BorrowRecord[]
+
+  @@map("books")
+}
+
+// 2. ตารางสมาชิก (members)
+model Member {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(255)
+  email     String   @unique @db.VarChar(255)
+  phone     String   @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  borrowRecords BorrowRecord[]
+
+  @@map("members")
+}
+
+// 3. ตารางการยืม-คืน (borrow_records)
+model BorrowRecord {
+  id         Int       @id @default(autoincrement())
+  bookId     Int       @map("book_id")
+  memberId   Int       @map("member_id")
+  borrowDate DateTime  @default(now()) @map("borrow_date")
+  returnDate DateTime? @map("return_date")
+  status     String    @default("borrowed") @db.VarChar(50) // "borrowed", "returned", "overdue"
+
+  book   Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@map("borrow_records")
+}
